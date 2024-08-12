@@ -50,7 +50,44 @@ app.get('/api/users/:id', (req, res) => {
     // Se o usuário foi encontrado, retorna o usuário
     return res.status(200).json(user);
     
-})
+});
+
+//Permite que a aplicação receba dados no formato JSON
+app.use(express.json());
+
+// POST localhost:3000/api/users
+app.post('/api/users', (req, res) => {
+    console.log(req.body);
+    
+    // Extrai o body da requisição
+    const { body } = req;
+    // Gerar um novo id para o usuário com base no último id da lista
+    const id = users[users.length - 1].id + 1;
+    // Adiciona o novo usuário ao array de usuários
+    const newUser = { id, ...body };
+    users.push(newUser);
+    return res.status(201).json(newUser);
+
+});
+
+// PUT localhost:3000/api/users/1
+app.delete("/api/users/:id", (req, res) => {
+    // Extrai o id da requisição
+    console.log(req.params);
+    // Converte o id para um número inteiro
+    const id = parseInt(req.params.id);
+    // Busca o índice do usuário pelo id
+    const index = users.findIndex(user => user.id === id);
+    // Se o usuário não foi encontrado, retorna um erro
+    if (index === -1) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+
+    // Remove o usuário da lista de usuários
+    users.splice(index, 1);
+    // Retorna o status 204 No Content
+    return res.status(200).json(users);
+});
 
 // Inicia o servidor na porta 3000
 app.listen(3000, () => {
