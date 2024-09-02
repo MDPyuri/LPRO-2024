@@ -32,7 +32,7 @@ const loggingMiddleware = (req, res, next) => {
     next();
 };
 app.use(loggingMiddleware);
-const produtos = [];
+let produtos = [];
 const findProduct = (id) => {
     const product = produtos.find((product) => product.id === id);
     if (!product) {
@@ -40,13 +40,27 @@ const findProduct = (id) => {
     }
     return product;
 };
+
+// crie um segundo middleware responsável por extrair um produto com base no seu ID do array de produtos
+// caso não encontre, o middleware não deve seguir com o fluxo normal do programa, mas sim encerrar lançando um erro com código de status adequado e um JSON com a mensagem explicando o motivo
+const extractProduct = (req, res, next) => {
+    const { id } = req.params;
+    try {
+        const product = findProduct(id);
+        req.product = product;
+        next();
+    }
+    catch (error) {
+        res.status(404).json({ message: error.message });
+    }
+};
 app.post('/produto', (req, res) => {
     const { id, nome, preco, estoque } = req.body;
     const product = { id, nome, preco, estoque };
     produtos.push(product);
     res.status(201).json(product);
 });
-app.delete('/produto/:id', (req, res) => {
+app.delete('/produto/:id', extractProduct, (req, res) => {
     const { id } = req.params;
     const index = produtos.findIndex((product) => product.id === id);
     if (index === -1) {
@@ -59,7 +73,7 @@ app.delete('/produto/:id', (req, res) => {
 app.get('/produto', (req, res) => {
     res.json(produtos);
 });
-app.get('/produto/:id', (req, res) => {
+app.get('/produto/:id', extractProduct, (req, res) => {
     try {
         const { id } = req.params;
         const product = findProduct(id);
@@ -69,7 +83,7 @@ app.get('/produto/:id', (req, res) => {
         res.status(404).json({ message: error.message });
     }
 });
-app.put('/produto/:id', (req, res) => {
+app.put('/produto/:id', extractProduct, (req, res) => {
     try {
         const { id } = req.params;
         const { nome, preco, estoque } = req.body;
@@ -83,7 +97,7 @@ app.put('/produto/:id', (req, res) => {
         res.status(404).json({ message: error.message });
     }
 });
-app.patch('/produto/:id', (req, res) => {
+app.patch('/produto/:id', extractProduct,  (req, res) => {
     try {
         const { id } = req.params;
         const { preco } = req.body;
@@ -95,7 +109,7 @@ app.patch('/produto/:id', (req, res) => {
         res.status(404).json({ message: error.message });
     }
 });
-app.patch('/produto/:id/estoque', (req, res) => {
+app.patch('/produto/:id/estoque', extractProduct, (req, res) => {
     try {
         const { id } = req.params;
         const { estoque } = req.body;
@@ -110,4 +124,12 @@ app.patch('/produto/:id/estoque', (req, res) => {
 app.listen(port, () => {
     console.log(`Servidor rodando em http://localhost:${port}`);
 });
+
+
+
+
+
+
+
+
 
